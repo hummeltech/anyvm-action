@@ -71,10 +71,10 @@ runs:
         DEBIAN_FRONTEND: noninteractive
       run: |
         # Install dependencies
-        sudo apt-get --no-install-recommends -y install \
+        sudo apt-get --assume-yes --no-install-recommends install \
           ${{ inputs.arch == 'loongarch64' && 'qemu-efi-loongarch64' || '' }} \
           ${{ inputs.arch == 'powerpc64' && 'qemu-system-ppc' || '' }} \
-          ${{ inputs.arch == 'riscv64' && 'qemu-efi-riscv64 qemu-system-riscv' || '' }} \
+          ${{ inputs.arch == 'riscv64' && 'qemu-efi-riscv64' || '' }} \
           ${{ inputs.arch == 's390x' && 'qemu-system-s390x' || '' }} \
           ${{ inputs.arch == 'sparc64' && 'qemu-system-sparc' || '' }} \
           ca-certificates \
@@ -134,6 +134,18 @@ runs:
           -v ${{ github.workspace }}:${{ github.workspace }} \
           -v ${{ runner.temp }}:${{ runner.temp }}
       shell: bash
+
+    - name: Install bash & git into any VM
+      env:
+        PROVISION_COMMANDS: ${{ case(
+            matrix.os == 'alpine', 'apk add bash git;',
+            matrix.os == 'freebsd', 'pkg install --yes bash git;',
+            ''
+          ) }}
+      run: |
+        ssh "${{ inputs.ssh-port }}" "sh -c '${PROVISION_COMMANDS}'"
+      shell: bash
+      if: env.PROVISION_COMMANDS != ''
 
     - name: Provision any VM
       run: |

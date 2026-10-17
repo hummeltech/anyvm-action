@@ -6,21 +6,27 @@ on:
 
 jobs:
   Test:
-    name: ${{ matrix.runs-on }} (${{ matrix.os }})
+    name: ${{ matrix.runs-on }} (${{ matrix.os }}) (${{ matrix.arch }})
     runs-on: ${{ matrix.runs-on }}
     strategy:
       matrix:
+        arch:
+          - aarch64
+          # - powerpc64
+          - riscv64
+          - x86_64
         os:
           - alpine
+          - debian
           - freebsd
         runs-on:
-          - macos-15
-          - macos-26
           - macos-latest
-          - ubuntu-22.04
-          - ubuntu-24.04
-          - ubuntu-26.04
           - ubuntu-latest
+        exclude:
+          - arch: riscv64
+            runs-on: macos-latest
+          # - arch: powerpc64
+          #   os: alpine
       fail-fast: false
     steps:
       - name: Checkout code
@@ -30,23 +36,14 @@ jobs:
         run: |
           echo "CPUS=$(nproc)" >> ${GITHUB_ENV}
 
-      - name: Set `PROVISION_COMMANDS`
-        run: |
-          if [ "${{ matrix.os }}" = "alpine" ]; then
-            echo "PROVISION_COMMANDS=apk add bash git sudo;" >> ${GITHUB_ENV}
-          fi
-          if [ "${{ matrix.os }}" = "freebsd" ]; then
-            echo "PROVISION_COMMANDS=pkg install --yes bash rsync sudo;" >> ${GITHUB_ENV}
-          fi
-
       - name: Provision VM
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         uses: ./
         with:
+          arch: ${{ matrix.arch }}
           cpu: ${{ env.CPUS }}
           os: ${{ matrix.os }}
-          provision-commands: ${{ env.PROVISION_COMMANDS }}
 
       - name: Run Test (/etc/os-release) (VM)
         run: |
@@ -84,10 +81,10 @@ jobs:
         shell: /bin/bash --noprofile --norc -euo pipefail {0}
         if: runner.os == 'macOS'
 
-      - name: Prepare Test (working-directory) (VM)
+      - name: Prepare Test (working-directory) (Host)
         run: |
           mkdir new_working_directory
-        shell: bash --noprofile --norc -euo pipefail {0}
+        shell: /bin/bash --noprofile --norc -euo pipefail {0}
 
       - name: Run Test (working-directory) (VM)
         run: |

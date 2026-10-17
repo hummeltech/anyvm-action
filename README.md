@@ -6,6 +6,7 @@ This action allows the running of command-line programs via the `bash` shell of 
 
 #### *This action is currently only tested with these os values (but will probably also work with others [see [here](https://github.com/anyvm-org/anyvm) for options]):*
   * `alpine`
+  * `debian`
   * `freebsd`
 
 # Usage
@@ -18,7 +19,6 @@ This action allows the running of command-line programs via the `bash` shell of 
         os: alpine
         cpu: 2
         mem: 2048
-        provision-commands: apk add bash git sudo;
     ```
 2. Execute a command using the `run` keyword
     ```yaml
